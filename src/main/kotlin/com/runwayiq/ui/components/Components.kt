@@ -4,6 +4,9 @@ import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
@@ -91,14 +94,20 @@ private fun MetricCardShell(
 
     Surface(
         modifier = modifier,
-        shape = RoundedCornerShape(10.dp),
+        shape = RoundedCornerShape(12.dp),
         color = if (pulseWarning) Coral.copy(alpha = 0.06f) else Surface2,
         border = BorderStroke(borderWidth, borderColor),
     ) {
         Column(Modifier.padding(16.dp)) {
-            Text(label, style = MaterialTheme.typography.bodySmall)
+            Text(label, style = MaterialTheme.typography.bodySmall, letterSpacing = 0.2.sp)
             Spacer(Modifier.height(4.dp))
-            Text(value, fontSize = 22.sp, fontWeight = FontWeight.Medium, color = TextPrimary)
+            Text(
+                value,
+                fontSize = 23.sp,
+                fontWeight = FontWeight.SemiBold,
+                fontFamily = NumericFontFamily,
+                color = TextPrimary,
+            )
             if (subtitle.isNotBlank()) {
                 Spacer(Modifier.height(2.dp))
                 Text(subtitle, style = MaterialTheme.typography.bodySmall, color = accentColor)
@@ -114,6 +123,13 @@ fun RunwayChart(
     modifier: Modifier = Modifier,
 ) {
     if (monthlyData.isEmpty()) return
+
+    // Resolved here (composable context) since Canvas's draw lambda below is a
+    // plain DrawScope block and can't call the theme's @Composable color getters.
+    val gridColor = BorderDefault
+    val revenueLineColor = Teal
+    val expenseLineColor = Coral
+    val cashLineColor = Purple
 
     val drawProgress by animateFloatAsState(
         targetValue = 1f,
@@ -157,6 +173,7 @@ fun RunwayChart(
                         formatDollars(tick),
                         style = MaterialTheme.typography.bodySmall,
                         fontSize = 10.sp,
+                        fontFamily = NumericFontFamily,
                         color = TextMuted,
                     )
                 }
@@ -174,7 +191,7 @@ fun RunwayChart(
 
                 repeat(5) { i ->
                     val y = padTop + chartH * i / 4f
-                    drawLine(BorderDefault, Offset(0f, y), Offset(w, y), strokeWidth = 0.5.dp.toPx())
+                    drawLine(gridColor, Offset(0f, y), Offset(w, y), strokeWidth = 0.5.dp.toPx())
                 }
 
                 fun yFor(value: Long): Float {
@@ -191,7 +208,7 @@ fun RunwayChart(
                     val y = yFor(d.revenueCents)
                     if (i == 0) revPath.moveTo(x, y) else revPath.lineTo(x, y)
                 }
-                drawPath(revPath, Teal, style = Stroke(width = 2.dp.toPx()))
+                drawPath(revPath, revenueLineColor, style = Stroke(width = 2.dp.toPx()))
 
                 val expPath = Path()
                 monthlyData.forEachIndexed { i, d ->
@@ -201,7 +218,7 @@ fun RunwayChart(
                 }
                 drawPath(
                     expPath,
-                    Coral,
+                    expenseLineColor,
                     style = Stroke(
                         width = 2.dp.toPx(),
                         pathEffect = androidx.compose.ui.graphics.PathEffect.dashPathEffect(floatArrayOf(8f, 4f)),
@@ -214,14 +231,14 @@ fun RunwayChart(
                     val y = yFor(cash)
                     if (i == 0) cashPath.moveTo(x, y) else cashPath.lineTo(x, y)
                 }
-                drawPath(cashPath, Purple, style = Stroke(width = 2.dp.toPx()))
+                drawPath(cashPath, cashLineColor, style = Stroke(width = 2.dp.toPx()))
 
                 if (drawProgress > 0.95f) {
                     monthlyData.forEachIndexed { i, d ->
                         val x = xFor(i)
-                        drawCircle(Teal, radius = 3.dp.toPx(), center = Offset(x, yFor(d.revenueCents)))
-                        drawCircle(Coral, radius = 3.dp.toPx(), center = Offset(x, yFor(d.expensesCents)))
-                        drawCircle(Purple, radius = 3.dp.toPx(), center = Offset(x, yFor(cumulativeCash[i])))
+                        drawCircle(revenueLineColor, radius = 3.dp.toPx(), center = Offset(x, yFor(d.revenueCents)))
+                        drawCircle(expenseLineColor, radius = 3.dp.toPx(), center = Offset(x, yFor(d.expensesCents)))
+                        drawCircle(cashLineColor, radius = 3.dp.toPx(), center = Offset(x, yFor(cumulativeCash[i])))
                     }
                 }
             }
@@ -292,24 +309,44 @@ fun LegendDot(color: Color, label: String) {
 }
 
 @Composable
-fun SideNav(current: NavScreen, onNavigate: (NavScreen) -> Unit) {
+fun SideNav(
+    current: NavScreen,
+    onNavigate: (NavScreen) -> Unit,
+    isDarkTheme: Boolean,
+    onToggleTheme: () -> Unit,
+) {
     Surface(
         modifier = Modifier.width(200.dp).fillMaxHeight(),
         color = Surface1,
         border = BorderStroke(0.5.dp, BorderDefault),
     ) {
         Column(Modifier.padding(12.dp)) {
-            Text(
-                "RunwayIQ",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Medium,
-                color = Purple,
-                modifier = Modifier.padding(horizontal = 8.dp, vertical = 12.dp),
-            )
+            Row(
+                Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 12.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    "RunwayIQ",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    letterSpacing = (-0.2).sp,
+                    color = Purple,
+                )
+                IconButton(onClick = onToggleTheme, modifier = Modifier.size(28.dp)) {
+                    Icon(
+                        if (isDarkTheme) Icons.Default.LightMode else Icons.Default.DarkMode,
+                        contentDescription = if (isDarkTheme) "Switch to light mode" else "Switch to dark mode",
+                        tint = TextSecondary,
+                        modifier = Modifier.size(16.dp),
+                    )
+                }
+            }
             Spacer(Modifier.height(8.dp))
             NavItem(NavScreen.DASHBOARD, "Dashboard", current, onNavigate)
             NavItem(NavScreen.REVENUE, "Revenue", current, onNavigate)
             NavItem(NavScreen.EXPENSES, "Expenses", current, onNavigate)
+            NavItem(NavScreen.BUDGET, "Budget", current, onNavigate)
             NavItem(NavScreen.SCENARIOS, "Scenarios", current, onNavigate)
             Spacer(Modifier.weight(1f))
             NavItem(NavScreen.SETTINGS, "Settings", current, onNavigate)

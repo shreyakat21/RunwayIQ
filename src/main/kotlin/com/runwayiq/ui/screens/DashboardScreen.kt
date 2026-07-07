@@ -14,7 +14,6 @@ import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.*
@@ -226,8 +225,8 @@ fun BoardReportDialog(
 
 @Composable
 fun AlertBanner(alert: Alert, onDismiss: () -> Unit) {
-    val bgColor = if (alert.severity == AlertSeverity.RED) Coral.copy(alpha = 0.12f) else Color(0xFFF59E0B).copy(alpha = 0.12f)
-    val accent = if (alert.severity == AlertSeverity.RED) Coral else Color(0xFFD97706)
+    val accent = if (alert.severity == AlertSeverity.RED) Coral else Amber
+    val bgColor = accent.copy(alpha = 0.12f)
 
     Surface(
         shape = RoundedCornerShape(10.dp),

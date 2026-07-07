@@ -10,10 +10,14 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Receipt
 import androidx.compose.material.icons.filled.TrendingUp
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.*
 import com.runwayiq.data.model.*
@@ -187,7 +191,13 @@ fun EntryScreen(
                                 Text("${entry.month} · ${entry.category}", style = MaterialTheme.typography.bodySmall)
                             }
                             Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                                Text(formatDollars(entry.amountCents), fontWeight = FontWeight.Medium, fontSize = 15.sp, color = TextPrimary)
+                                Text(
+                                    formatDollars(entry.amountCents),
+                                    fontWeight = FontWeight.SemiBold,
+                                    fontFamily = NumericFontFamily,
+                                    fontSize = 15.sp,
+                                    color = TextPrimary,
+                                )
                                 TextButton(onClick = { onDelete(entry.id) }) {
                                     Text("Remove", color = Coral, fontSize = 13.sp)
                                 }
@@ -482,8 +492,12 @@ fun ScenariosScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column {
-                            Text(scenario.name, fontWeight = FontWeight.Medium, color = if (isActive) PurpleDark else TextPrimary)
-                            Text("Starting cash: ${formatDollars(scenario.cashBalanceCents)}", style = MaterialTheme.typography.bodySmall)
+                            Text(scenario.name, fontWeight = FontWeight.SemiBold, color = if (isActive) PurpleDark else TextPrimary)
+                            Text(
+                                "Starting cash: ${formatDollars(scenario.cashBalanceCents)}",
+                                style = MaterialTheme.typography.bodySmall,
+                                fontFamily = NumericFontFamily,
+                            )
                         }
                         if (isActive) {
                             Surface(shape = RoundedCornerShape(6.dp), color = Purple) {
@@ -540,25 +554,64 @@ fun ScenarioComparisonDialog(
 }
 
 @Composable
-fun SettingsScreen(state: AppState, onSaveApiKey: (String) -> Unit) {
-    var key by remember(state.apiKey) { mutableStateOf(state.apiKey) }
+fun SettingsScreen(state: AppState, onSaveApiKey: (String) -> Unit, onClearApiKey: () -> Unit) {
+    var keyInput by remember { mutableStateOf("") }
+    var isKeyVisible by remember { mutableStateOf(false) }
+    val hasKey = state.apiKey.isNotBlank()
 
     Column(Modifier.fillMaxSize().padding(24.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
         SectionHeader("Settings")
 
         Surface(shape = RoundedCornerShape(12.dp), color = Surface2, border = BorderStroke(0.5.dp, BorderDefault)) {
             Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text("Groq API key", fontWeight = FontWeight.Medium, color = TextPrimary)
-                Text("Required for the CFO chat panel. Your key is stored locally.", style = MaterialTheme.typography.bodyMedium)
+                Text("Groq API key", fontWeight = FontWeight.SemiBold, color = TextPrimary)
+                Text(
+                    "Required for the CFO chat panel. Your key is encrypted on disk and never leaves your machine.",
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+
+                if (hasKey) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Surface(shape = RoundedCornerShape(6.dp), color = TealLight) {
+                            Text(
+                                "Key saved · ····${state.apiKey.takeLast(4)}",
+                                modifier = Modifier.padding(8.dp, 4.dp),
+                                color = TealDark,
+                                fontSize = 12.sp,
+                                fontFamily = NumericFontFamily,
+                            )
+                        }
+                        TextButton(onClick = onClearApiKey) {
+                            Text("Remove key", color = Coral, fontSize = 13.sp)
+                        }
+                    }
+                }
+
                 OutlinedTextField(
-                    value = key,
-                    onValueChange = { key = it },
-                    label = { Text("gsk_...") },
+                    value = keyInput,
+                    onValueChange = { keyInput = it },
+                    label = { Text(if (hasKey) "Replace key" else "gsk_...") },
+                    placeholder = { Text("gsk_...") },
                     singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
+                    visualTransformation = if (isKeyVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                    trailingIcon = {
+                        IconButton(onClick = { isKeyVisible = !isKeyVisible }) {
+                            Icon(
+                                if (isKeyVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                                contentDescription = if (isKeyVisible) "Hide key" else "Show key",
+                                tint = TextSecondary,
+                            )
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
                 )
                 Button(
-                    onClick = { onSaveApiKey(key) },
+                    onClick = {
+                        onSaveApiKey(keyInput)
+                        keyInput = ""
+                        isKeyVisible = false
+                    },
+                    enabled = keyInput.isNotBlank(),
                     colors = ButtonDefaults.buttonColors(containerColor = Purple)
                 ) { Text("Save key") }
             }

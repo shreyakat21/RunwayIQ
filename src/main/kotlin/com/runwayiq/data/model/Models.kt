@@ -76,3 +76,20 @@ data class CsvImportRow(
     val label: String,
     val category: String,
 )
+
+data class Budget(
+    val id: Long,
+    val category: String,
+    val entryType: String,
+    val monthlyTargetCents: Long,
+)
+
+data class BudgetLine(
+    val category: String,
+    val entryType: String,
+    val targetCents: Long,
+    val actualCents: Long,
+) {
+    val varianceCents: Long get() = actualCents - targetCents
+    val isOverBudget: Boolean get() = if (entryType == "expense") actualCents > targetCents else actualCents < targetCents
+}

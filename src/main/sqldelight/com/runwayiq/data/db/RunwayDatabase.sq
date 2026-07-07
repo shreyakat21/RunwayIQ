@@ -42,6 +42,15 @@ CREATE TABLE IF NOT EXISTS alert (
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+CREATE TABLE IF NOT EXISTS budget (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    category TEXT NOT NULL,
+    entry_type TEXT NOT NULL,
+    monthly_target_cents INTEGER NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    UNIQUE(category, entry_type)
+);
+
 -- Revenue queries
 getAllRevenue:
 SELECT * FROM revenue_entry ORDER BY month DESC;
@@ -106,3 +115,14 @@ INSERT INTO alert (scenario_id, alert_type, severity, message) VALUES (?, ?, ?, 
 
 dismissAlert:
 UPDATE alert SET dismissed = 1 WHERE id = ?;
+
+-- Budget queries
+getAllBudgets:
+SELECT * FROM budget;
+
+upsertBudget:
+INSERT INTO budget (category, entry_type, monthly_target_cents) VALUES (?, ?, ?)
+ON CONFLICT(category, entry_type) DO UPDATE SET monthly_target_cents = excluded.monthly_target_cents;
+
+deleteBudget:
+DELETE FROM budget WHERE id = ?;

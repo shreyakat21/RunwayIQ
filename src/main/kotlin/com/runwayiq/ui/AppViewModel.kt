@@ -1,14 +1,16 @@
 package com.runwayiq.ui
 
 import com.runwayiq.ai.GroqClient
+import com.runwayiq.data.SecureKeyStore
 import com.runwayiq.data.model.*
 import com.runwayiq.data.repository.FinancialRepository
 import com.runwayiq.domain.MonitoringService
+import com.runwayiq.domain.usecase.BudgetUseCase
 import com.runwayiq.domain.usecase.FinancialSummaryUseCase
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 
-enum class NavScreen { DASHBOARD, REVENUE, EXPENSES, SCENARIOS, SETTINGS }
+enum class NavScreen { DASHBOARD, REVENUE, EXPENSES, BUDGET, SCENARIOS, SETTINGS }
 
 data class AppState(
     val screen: NavScreen = NavScreen.DASHBOARD,
@@ -17,6 +19,7 @@ data class AppState(
     val summary: FinancialSummary? = null,
     val revenues: List<RevenueEntry> = emptyList(),
     val expenses: List<ExpenseEntry> = emptyList(),
+    val budgetLines: List<BudgetLine> = emptyList(),
     val chatMessages: List<ChatMessage> = emptyList(),
     val alerts: List<Alert> = emptyList(),
     val streamingResponse: String = "",
@@ -29,6 +32,7 @@ data class AppState(
     val boardReportContent: String? = null,
     val isGeneratingBoardReport: Boolean = false,
     val showOnboarding: Boolean = false,
+    val isDarkTheme: Boolean = false,
     val addEntryTrigger: Int = 0,
     val chatSendTrigger: Int = 0,
     val apiKey: String = "",
@@ -39,6 +43,7 @@ class AppViewModel(
     private val repo: FinancialRepository,
     private val summaryUseCase: FinancialSummaryUseCase,
 ) {
+    private val budgetUseCase = BudgetUseCase(repo)
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val _state = MutableStateFlow(AppState())
     val state: StateFlow<AppState> = _state.asStateFlow()
@@ -67,15 +72,33 @@ class AppViewModel(
     }
 
     private fun persistApiKey(key: String) {
-        prefs().put("api_key", key)
+        prefs().put("api_key", SecureKeyStore.encrypt(key))
     }
 
     fun loadApiKey() {
-        val key = prefs().get("api_key", "")
+        val key = SecureKeyStore.decrypt(prefs().get("api_key", ""))
         if (key.isNotBlank()) setApiKey(key)
     }
 
+    fun clearApiKey() {
+        groqClient?.close()
+        groqClient = null
+        _state.update { it.copy(apiKey = "") }
+        prefs().remove("api_key")
+    }
+
     private fun prefs() = java.util.prefs.Preferences.userRoot().node("runwayiq")
+
+    fun loadThemePreference() {
+        val isDark = prefs().getBoolean("dark_theme", false)
+        _state.update { it.copy(isDarkTheme = isDark) }
+    }
+
+    fun toggleTheme() {
+        val newValue = !_state.value.isDarkTheme
+        _state.update { it.copy(isDarkTheme = newValue) }
+        prefs().putBoolean("dark_theme", newValue)
+    }
 
     private fun launchSafely(block: suspend () -> Unit) {
         scope.launch {
@@ -152,6 +175,7 @@ class AppViewModel(
                     summary = null,
                     revenues = emptyList(),
                     expenses = emptyList(),
+                    budgetLines = emptyList(),
                     chatMessages = emptyList(),
                     alerts = emptyList(),
                 )
@@ -167,6 +191,7 @@ class AppViewModel(
         } else null
         val messages = resolvedActive?.let { repo.getMessages(it.id) } ?: emptyList()
         val alerts = repo.getActiveAlerts()
+        val budgetLines = budgetUseCase.computeBudgetLines()
 
         _state.update {
             it.copy(
@@ -175,6 +200,7 @@ class AppViewModel(
                 summary = summary,
                 revenues = revenues,
                 expenses = expenses,
+                budgetLines = budgetLines,
                 chatMessages = messages,
                 alerts = alerts,
                 isLoading = false,
@@ -228,6 +254,17 @@ class AppViewModel(
             repo.insertExpenseBatch(rows)
             loadAll()
         }
+    }
+
+    fun setBudget(category: String, entryType: String, monthlyTargetDollars: Double) {
+        launchSafely {
+            repo.setBudget(category, entryType, (monthlyTargetDollars * 100).toLong())
+            loadAll()
+        }
+    }
+
+    fun deleteBudget(id: Long) {
+        launchSafely { repo.deleteBudget(id); loadAll() }
     }
 
     fun addScenario(name: String, cashBalance: Double) {

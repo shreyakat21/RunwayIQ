@@ -126,4 +126,18 @@ class FinancialRepository(private val db: RunwayDatabase) {
             }
         }
     }
+
+    suspend fun getAllBudgets(): List<Budget> = withContext(Dispatchers.IO) {
+        db.runwayDatabaseQueries.getAllBudgets().executeAsList().map {
+            Budget(it.id, it.category, it.entry_type, it.monthly_target_cents)
+        }
+    }
+
+    suspend fun setBudget(category: String, entryType: String, monthlyTargetCents: Long) = withContext(Dispatchers.IO) {
+        db.runwayDatabaseQueries.upsertBudget(category, entryType, monthlyTargetCents)
+    }
+
+    suspend fun deleteBudget(id: Long) = withContext(Dispatchers.IO) {
+        db.runwayDatabaseQueries.deleteBudget(id)
+    }
 }

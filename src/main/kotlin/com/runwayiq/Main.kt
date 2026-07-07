@@ -32,6 +32,7 @@ fun main() = application {
 
     LaunchedEffect(Unit) {
         viewModel.loadApiKey()
+        viewModel.loadThemePreference()
         focusRequester.requestFocus()
     }
 
@@ -47,7 +48,7 @@ fun main() = application {
         title = "RunwayIQ",
         state = rememberWindowState(width = 1100.dp, height = 720.dp),
     ) {
-        RunwayIQTheme {
+        RunwayIQTheme(darkTheme = state.isDarkTheme) {
             Box(
                 Modifier
                     .fillMaxSize()
@@ -62,8 +63,9 @@ fun main() = application {
                             Key.One -> { viewModel.navigate(NavScreen.DASHBOARD); true }
                             Key.Two -> { viewModel.navigate(NavScreen.REVENUE); true }
                             Key.Three -> { viewModel.navigate(NavScreen.EXPENSES); true }
-                            Key.Four -> { viewModel.navigate(NavScreen.SCENARIOS); true }
-                            Key.Five -> { viewModel.navigate(NavScreen.SETTINGS); true }
+                            Key.Four -> { viewModel.navigate(NavScreen.BUDGET); true }
+                            Key.Five -> { viewModel.navigate(NavScreen.SCENARIOS); true }
+                            Key.Six -> { viewModel.navigate(NavScreen.SETTINGS); true }
                             Key.N -> { viewModel.triggerAddEntry(); true }
                             Key.Enter -> { viewModel.triggerChatSend(); true }
                             else -> false
@@ -78,7 +80,12 @@ fun main() = application {
                     )
                 } else {
                     Row(Modifier.fillMaxSize()) {
-                        SideNav(current = state.screen, onNavigate = viewModel::navigate)
+                        SideNav(
+                            current = state.screen,
+                            onNavigate = viewModel::navigate,
+                            isDarkTheme = state.isDarkTheme,
+                            onToggleTheme = viewModel::toggleTheme,
+                        )
 
                         Surface(Modifier.weight(1f).fillMaxHeight()) {
                             when (state.screen) {
@@ -103,6 +110,11 @@ fun main() = application {
                                     onImportCsv = viewModel::importExpenseCsv,
                                     onError = viewModel::showError,
                                 )
+                                NavScreen.BUDGET -> BudgetScreen(
+                                    state = state,
+                                    onSetBudget = viewModel::setBudget,
+                                    onDeleteBudget = viewModel::deleteBudget,
+                                )
                                 NavScreen.SCENARIOS -> ScenariosScreen(
                                     state = state,
                                     onAdd = viewModel::addScenario,
@@ -113,6 +125,7 @@ fun main() = application {
                                 NavScreen.SETTINGS -> SettingsScreen(
                                     state = state,
                                     onSaveApiKey = viewModel::setApiKey,
+                                    onClearApiKey = viewModel::clearApiKey,
                                 )
                             }
                         }

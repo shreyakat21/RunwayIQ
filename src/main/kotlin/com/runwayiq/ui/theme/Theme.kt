@@ -30,58 +30,57 @@ data class RunwayPalette(
     val borderDefault: Color,
 )
 
+// Palette values sourced from Ghostfolio's own theme (apps/client/src/styles.scss):
+// primary teal rgb(54,207,204), warn red rgb(220,53,69), dark bg rgb(25,25,25),
+// dark card rgb(66,66,66), light app-bar rgb(245,245,245).
 private val LightPalette = RunwayPalette(
-    purple = Color(0xFF4338CA),
-    purpleLight = Color(0xFFEEF2FF),
-    purpleDark = Color(0xFF312E81),
-    teal = Color(0xFF047857),
-    tealLight = Color(0xFFECFDF5),
-    tealDark = Color(0xFF065F46),
-    coral = Color(0xFFB91C1C),
-    coralLight = Color(0xFFFEF2F2),
-    coralDark = Color(0xFF7F1D1D),
+    purple = Color(0xFF0E9490),
+    purpleLight = Color(0xFFE0F7F6),
+    purpleDark = Color(0xFF0B615F),
+    teal = Color(0xFF2E7D32),
+    tealLight = Color(0xFFE8F5E9),
+    tealDark = Color(0xFF1B5E20),
+    coral = Color(0xFFB02A37),
+    coralLight = Color(0xFFFDECEA),
+    coralDark = Color(0xFF7A1F2B),
     amber = Color(0xFFB45309),
     amberLight = Color(0xFFFFFBEB),
     amberDark = Color(0xFF78350F),
-    surface0 = Color(0xFFF1F2F5),
-    surface1 = Color(0xFFFAFAFC),
+    surface0 = Color(0xFFFAFAFA),
+    surface1 = Color(0xFFF5F5F5),
     surface2 = Color(0xFFFFFFFF),
-    textPrimary = Color(0xFF0F172A),
-    textSecondary = Color(0xFF475569),
-    textMuted = Color(0xFF94A3B8),
-    borderDefault = Color(0xFFE2E8F0),
+    textPrimary = Color(0xFF212121),
+    textSecondary = Color(0xFF666666),
+    textMuted = Color(0xFF9E9E9E),
+    borderDefault = Color(0xFFECECEC),
 )
 
 private val DarkPalette = RunwayPalette(
-    purple = Color(0xFF6366F1),
-    purpleLight = Color(0xFF26244F),
-    purpleDark = Color(0xFFC7D2FE),
-    teal = Color(0xFF10B981),
-    tealLight = Color(0xFF0B2E23),
-    tealDark = Color(0xFF6EE7B7),
-    coral = Color(0xFFF87171),
-    coralLight = Color(0xFF3F1518),
-    coralDark = Color(0xFFFCA5A5),
+    purple = Color(0xFF36CFCC),
+    purpleLight = Color(0xFF123B3A),
+    purpleDark = Color(0xFF7FEAE7),
+    teal = Color(0xFF66BB6A),
+    tealLight = Color(0xFF1B3320),
+    tealDark = Color(0xFFA5D6A7),
+    coral = Color(0xFFDC3545),
+    coralLight = Color(0xFF3D1418),
+    coralDark = Color(0xFFF1948A),
     amber = Color(0xFFFBBF24),
     amberLight = Color(0xFF3F2A06),
     amberDark = Color(0xFFFDE68A),
-    surface0 = Color(0xFF0B0F1A),
-    surface1 = Color(0xFF121826),
-    surface2 = Color(0xFF171E2E),
-    textPrimary = Color(0xFFF1F5F9),
-    textSecondary = Color(0xFF94A3B8),
-    textMuted = Color(0xFF64748B),
-    borderDefault = Color(0xFF263042),
+    surface0 = Color(0xFF191919),
+    surface1 = Color(0xFF212121),
+    surface2 = Color(0xFF424242),
+    textPrimary = Color(0xFFF2F2F2),
+    textSecondary = Color(0xFFBCBCBC),
+    textMuted = Color(0xFF909090),
+    borderDefault = Color(0xFF515151),
 )
 
 val LocalRunwayPalette = staticCompositionLocalOf { LightPalette }
 
-/**
- * Numeric/ledger font used for currency and metric figures throughout the app.
- * Tabular monospace digits give financial figures a terminal/ledger feel and
- * keep amounts aligned in tables and lists.
- */
-val NumericFontFamily: FontFamily = FontFamily.Monospace
+/** Numeric/metric font used for currency figures throughout the app. */
+val NumericFontFamily: FontFamily = FontFamily.SansSerif
 
 val Purple: Color
     @Composable get() = LocalRunwayPalette.current.purple

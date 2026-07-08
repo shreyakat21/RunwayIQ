@@ -64,8 +64,9 @@ fun main() = application {
                             Key.Two -> { viewModel.navigate(NavScreen.REVENUE); true }
                             Key.Three -> { viewModel.navigate(NavScreen.EXPENSES); true }
                             Key.Four -> { viewModel.navigate(NavScreen.BUDGET); true }
-                            Key.Five -> { viewModel.navigate(NavScreen.SCENARIOS); true }
-                            Key.Six -> { viewModel.navigate(NavScreen.SETTINGS); true }
+                            Key.Five -> { viewModel.navigate(NavScreen.WHATIF); true }
+                            Key.Six -> { viewModel.navigate(NavScreen.SCENARIOS); true }
+                            Key.Seven -> { viewModel.navigate(NavScreen.SETTINGS); true }
                             Key.N -> { viewModel.triggerAddEntry(); true }
                             Key.Enter -> { viewModel.triggerChatSend(); true }
                             else -> false
@@ -95,6 +96,8 @@ fun main() = application {
                                     onDismissAlert = viewModel::dismissAlert,
                                     onGenerateBoardReport = viewModel::generateBoardReport,
                                     onDismissBoardReport = viewModel::dismissBoardReport,
+                                    onGenerateInsight = viewModel::generateInsight,
+                                    onNavigate = viewModel::navigate,
                                 )
                                 NavScreen.REVENUE -> RevenueScreen(
                                     state = state,
@@ -115,6 +118,7 @@ fun main() = application {
                                     onSetBudget = viewModel::setBudget,
                                     onDeleteBudget = viewModel::deleteBudget,
                                 )
+                                NavScreen.WHATIF -> WhatIfScreen(state = state)
                                 NavScreen.SCENARIOS -> ScenariosScreen(
                                     state = state,
                                     onAdd = viewModel::addScenario,

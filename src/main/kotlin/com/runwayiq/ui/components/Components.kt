@@ -5,6 +5,8 @@ import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDownward
+import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material3.*
@@ -111,6 +113,86 @@ private fun MetricCardShell(
             if (subtitle.isNotBlank()) {
                 Spacer(Modifier.height(2.dp))
                 Text(subtitle, style = MaterialTheme.typography.bodySmall, color = accentColor)
+            }
+        }
+    }
+}
+
+/** A minimal, axis-less line chart for trend indicators inside a summary card. */
+@Composable
+fun Sparkline(values: List<Float>, color: Color, modifier: Modifier = Modifier) {
+    if (values.size < 2) return
+    val min = values.min()
+    val max = values.max()
+    val range = (max - min).let { if (it == 0f) 1f else it }
+
+    Canvas(modifier) {
+        val stepX = size.width / (values.size - 1)
+        val path = Path()
+        values.forEachIndexed { i, v ->
+            val x = stepX * i
+            val y = size.height * (1f - (v - min) / range)
+            if (i == 0) path.moveTo(x, y) else path.lineTo(x, y)
+        }
+        drawPath(path, color, style = Stroke(width = 1.5.dp.toPx()))
+    }
+}
+
+/**
+ * A summary card for the Financial Home dashboard: a headline value, an
+ * optional month-over-month delta (colored by whether the change is
+ * favorable, not just by its sign — e.g. a spending increase is unfavorable
+ * even though it's a positive delta), and an optional trend sparkline.
+ */
+@Composable
+fun SummaryCard(
+    title: String,
+    value: String,
+    deltaText: String?,
+    deltaIncreased: Boolean = false,
+    deltaFavorable: Boolean = true,
+    sparklineValues: List<Float> = emptyList(),
+    sparklineColor: Color = Purple,
+    modifier: Modifier = Modifier,
+) {
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(12.dp),
+        color = Surface2,
+        border = BorderStroke(0.5.dp, BorderDefault),
+    ) {
+        Column(Modifier.padding(16.dp)) {
+            Text(title, style = MaterialTheme.typography.bodySmall, letterSpacing = 0.2.sp)
+            Spacer(Modifier.height(4.dp))
+            Text(
+                value,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.SemiBold,
+                fontFamily = NumericFontFamily,
+                color = TextPrimary,
+            )
+            Spacer(Modifier.height(4.dp))
+            if (deltaText != null) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Icon(
+                        if (deltaIncreased) Icons.Default.ArrowUpward else Icons.Default.ArrowDownward,
+                        contentDescription = null,
+                        tint = if (deltaFavorable) Teal else Coral,
+                        modifier = Modifier.size(11.dp),
+                    )
+                    Text(
+                        deltaText,
+                        fontSize = 12.sp,
+                        fontFamily = NumericFontFamily,
+                        color = if (deltaFavorable) Teal else Coral,
+                    )
+                }
+            } else {
+                Spacer(Modifier.height(14.dp))
+            }
+            if (sparklineValues.size >= 2) {
+                Spacer(Modifier.height(8.dp))
+                Sparkline(sparklineValues, sparklineColor, Modifier.fillMaxWidth().height(24.dp))
             }
         }
     }
@@ -347,6 +429,7 @@ fun SideNav(
             NavItem(NavScreen.REVENUE, "Revenue", current, onNavigate)
             NavItem(NavScreen.EXPENSES, "Expenses", current, onNavigate)
             NavItem(NavScreen.BUDGET, "Budget", current, onNavigate)
+            NavItem(NavScreen.WHATIF, "What-If", current, onNavigate)
             NavItem(NavScreen.SCENARIOS, "Scenarios", current, onNavigate)
             Spacer(Modifier.weight(1f))
             NavItem(NavScreen.SETTINGS, "Settings", current, onNavigate)
@@ -392,6 +475,12 @@ fun formatDollars(cents: Long): String {
         dollars >= 1_000 -> "${"$"}${"%.0f".format(dollars / 1_000.0)}k"
         else -> "${"$"}$dollars"
     }
+}
+
+/** Formats cents with an explicit +/- sign, safe for values that can go negative (deltas, variances). */
+fun signedDollars(cents: Long): String {
+    val sign = if (cents >= 0) "+" else "-"
+    return "$sign${formatDollars(kotlin.math.abs(cents))}"
 }
 
 fun formatRunway(months: Double): String {

@@ -17,7 +17,6 @@ import com.runwayiq.data.model.BudgetLine
 import com.runwayiq.ui.AppState
 import com.runwayiq.ui.components.*
 import com.runwayiq.ui.theme.*
-import kotlin.math.abs
 
 private val REVENUE_CATEGORIES = listOf("mrr", "one_time", "grant")
 private val EXPENSE_CATEGORIES = listOf("salaries", "cloud", "marketing", "office", "software", "opex")
@@ -178,10 +177,7 @@ private fun BudgetProgressBar(line: BudgetLine) {
     }
 }
 
-private fun varianceLabel(line: BudgetLine): String {
-    val sign = if (line.varianceCents >= 0) "+" else "-"
-    return "$sign${formatDollars(abs(line.varianceCents))}"
-}
+private fun varianceLabel(line: BudgetLine): String = signedDollars(line.varianceCents)
 
 @Composable
 private fun SetBudgetDialog(

@@ -10,7 +10,7 @@ import com.runwayiq.domain.usecase.FinancialSummaryUseCase
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 
-enum class NavScreen { DASHBOARD, REVENUE, EXPENSES, BUDGET, SCENARIOS, SETTINGS }
+enum class NavScreen { DASHBOARD, REVENUE, EXPENSES, BUDGET, WHATIF, SCENARIOS, SETTINGS }
 
 data class AppState(
     val screen: NavScreen = NavScreen.DASHBOARD,
@@ -31,6 +31,8 @@ data class AppState(
     val showBoardReport: Boolean = false,
     val boardReportContent: String? = null,
     val isGeneratingBoardReport: Boolean = false,
+    val insightText: String? = null,
+    val isGeneratingInsight: Boolean = false,
     val showOnboarding: Boolean = false,
     val isDarkTheme: Boolean = false,
     val addEntryTrigger: Int = 0,
@@ -363,6 +365,36 @@ class AppViewModel(
     fun dismissBoardReport() {
         _state.update {
             it.copy(showBoardReport = false, boardReportContent = null, isGeneratingBoardReport = false)
+        }
+    }
+
+    fun generateInsight() {
+        val client = groqClient
+        if (client == null) {
+            _state.update { it.copy(errorMessage = "Add your Groq API key in Settings first.") }
+            return
+        }
+        val scenario = _state.value.activeScenario
+        val summary = _state.value.summary
+        if (scenario == null || summary == null) return
+
+        scope.launch {
+            _state.update { it.copy(isGeneratingInsight = true) }
+            try {
+                val systemPrompt = summaryUseCase.buildCfoContext(summary, scenario.name)
+                val result = client.complete(
+                    systemPrompt = systemPrompt,
+                    messages = listOf(
+                        GroqClient.Message(
+                            "user",
+                            "In one short sentence (max 25 words), give me the single most important insight or recommendation based on this data. No preamble, just the sentence.",
+                        ),
+                    ),
+                )
+                _state.update { it.copy(isGeneratingInsight = false, insightText = result.trim()) }
+            } catch (e: Exception) {
+                _state.update { it.copy(isGeneratingInsight = false, errorMessage = "API error: ${e.message}") }
+            }
         }
     }
 

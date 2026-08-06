@@ -554,74 +554,118 @@ fun ScenarioComparisonDialog(
 }
 
 @Composable
-fun SettingsScreen(state: AppState, onSaveApiKey: (String) -> Unit, onClearApiKey: () -> Unit) {
-    var keyInput by remember { mutableStateOf("") }
-    var isKeyVisible by remember { mutableStateOf(false) }
-    val hasKey = state.apiKey.isNotBlank()
-
+fun SettingsScreen(
+    state: AppState,
+    onSaveApiKey: (String) -> Unit,
+    onClearApiKey: () -> Unit,
+    onSaveStockApiKey: (String) -> Unit,
+    onClearStockApiKey: () -> Unit,
+    onLoadSampleData: () -> Unit,
+) {
     Column(Modifier.fillMaxSize().padding(24.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
         SectionHeader("Settings")
 
-        Surface(shape = RoundedCornerShape(12.dp), color = Surface2, border = BorderStroke(0.5.dp, BorderDefault)) {
-            Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text("Groq API key", fontWeight = FontWeight.SemiBold, color = TextPrimary)
-                Text(
-                    "Required for the CFO chat panel. Your key is encrypted on disk and never leaves your machine.",
-                    style = MaterialTheme.typography.bodyMedium,
-                )
+        ApiKeySection(
+            title = "Groq API key",
+            description = "Required for the CFO chat panel and AI insights. Your key is encrypted on disk and never leaves your machine.",
+            currentKey = state.apiKey,
+            placeholder = "gsk_...",
+            onSave = onSaveApiKey,
+            onClear = onClearApiKey,
+        )
 
-                if (hasKey) {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Surface(shape = RoundedCornerShape(6.dp), color = TealLight) {
-                            Text(
-                                "Key saved · ····${state.apiKey.takeLast(4)}",
-                                modifier = Modifier.padding(8.dp, 4.dp),
-                                color = TealDark,
-                                fontSize = 12.sp,
-                                fontFamily = NumericFontFamily,
-                            )
-                        }
-                        TextButton(onClick = onClearApiKey) {
-                            Text("Remove key", color = Coral, fontSize = 13.sp)
-                        }
-                    }
-                }
-
-                OutlinedTextField(
-                    value = keyInput,
-                    onValueChange = { keyInput = it },
-                    label = { Text(if (hasKey) "Replace key" else "gsk_...") },
-                    placeholder = { Text("gsk_...") },
-                    singleLine = true,
-                    visualTransformation = if (isKeyVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                    trailingIcon = {
-                        IconButton(onClick = { isKeyVisible = !isKeyVisible }) {
-                            Icon(
-                                if (isKeyVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                                contentDescription = if (isKeyVisible) "Hide key" else "Show key",
-                                tint = TextSecondary,
-                            )
-                        }
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                Button(
-                    onClick = {
-                        onSaveApiKey(keyInput)
-                        keyInput = ""
-                        isKeyVisible = false
-                    },
-                    enabled = keyInput.isNotBlank(),
-                    colors = ButtonDefaults.buttonColors(containerColor = Purple)
-                ) { Text("Save key") }
-            }
-        }
+        ApiKeySection(
+            title = "Finnhub API key",
+            description = "Optional — enables live stock prices on the Portfolio screen. Get a free key at finnhub.io. Encrypted on disk, never leaves your machine.",
+            currentKey = state.stockApiKey,
+            placeholder = "cabc123...",
+            onSave = onSaveStockApiKey,
+            onClear = onClearStockApiKey,
+        )
 
         Surface(shape = RoundedCornerShape(12.dp), color = Surface2, border = BorderStroke(0.5.dp, BorderDefault)) {
             Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text("Data storage", fontWeight = FontWeight.Medium, color = TextPrimary)
                 Text("All financial data is stored locally in ~/.runwayiq/runway.db — nothing leaves your machine.", style = MaterialTheme.typography.bodyMedium)
             }
+        }
+
+        Surface(shape = RoundedCornerShape(12.dp), color = Surface2, border = BorderStroke(0.5.dp, BorderDefault)) {
+            Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("Demo data", fontWeight = FontWeight.Medium, color = TextPrimary)
+                Text(
+                    "Populate the app with example revenue, expenses, budgets, and holdings so you can see it in action.",
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+                Spacer(Modifier.height(4.dp))
+                OutlinedButton(onClick = onLoadSampleData) { Text("Load sample data") }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ApiKeySection(
+    title: String,
+    description: String,
+    currentKey: String,
+    placeholder: String,
+    onSave: (String) -> Unit,
+    onClear: () -> Unit,
+) {
+    var keyInput by remember { mutableStateOf("") }
+    var isKeyVisible by remember { mutableStateOf(false) }
+    val hasKey = currentKey.isNotBlank()
+
+    Surface(shape = RoundedCornerShape(12.dp), color = Surface2, border = BorderStroke(0.5.dp, BorderDefault)) {
+        Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text(title, fontWeight = FontWeight.SemiBold, color = TextPrimary)
+            Text(description, style = MaterialTheme.typography.bodyMedium)
+
+            if (hasKey) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Surface(shape = RoundedCornerShape(6.dp), color = TealLight) {
+                        Text(
+                            "Key saved · ····${currentKey.takeLast(4)}",
+                            modifier = Modifier.padding(8.dp, 4.dp),
+                            color = TealDark,
+                            fontSize = 12.sp,
+                            fontFamily = NumericFontFamily,
+                        )
+                    }
+                    TextButton(onClick = onClear) {
+                        Text("Remove key", color = Coral, fontSize = 13.sp)
+                    }
+                }
+            }
+
+            OutlinedTextField(
+                value = keyInput,
+                onValueChange = { keyInput = it },
+                label = { Text(if (hasKey) "Replace key" else placeholder) },
+                placeholder = { Text(placeholder) },
+                singleLine = true,
+                visualTransformation = if (isKeyVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                trailingIcon = {
+                    IconButton(onClick = { isKeyVisible = !isKeyVisible }) {
+                        Icon(
+                            if (isKeyVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                            contentDescription = if (isKeyVisible) "Hide key" else "Show key",
+                            tint = TextSecondary,
+                        )
+                    }
+                },
+                modifier = Modifier.fillMaxWidth(),
+            )
+            Button(
+                onClick = {
+                    onSave(keyInput)
+                    keyInput = ""
+                    isKeyVisible = false
+                },
+                enabled = keyInput.isNotBlank(),
+                colors = ButtonDefaults.buttonColors(containerColor = Purple)
+            ) { Text("Save key") }
         }
     }
 }

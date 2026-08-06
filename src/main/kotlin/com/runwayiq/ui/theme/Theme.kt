@@ -6,6 +6,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.platform.Font
 import androidx.compose.ui.unit.sp
 
 data class RunwayPalette(
@@ -30,57 +31,65 @@ data class RunwayPalette(
     val borderDefault: Color,
 )
 
-// Palette values sourced from Ghostfolio's own theme (apps/client/src/styles.scss):
-// primary teal rgb(54,207,204), warn red rgb(220,53,69), dark bg rgb(25,25,25),
-// dark card rgb(66,66,66), light app-bar rgb(245,245,245).
+// Deep-navy fintech dashboard palette: bright cyan as the primary accent,
+// emerald for positive/good indicators, rose for negative/alert indicators,
+// amber for secondary warnings.
 private val LightPalette = RunwayPalette(
-    purple = Color(0xFF0E9490),
-    purpleLight = Color(0xFFE0F7F6),
-    purpleDark = Color(0xFF0B615F),
-    teal = Color(0xFF2E7D32),
-    tealLight = Color(0xFFE8F5E9),
-    tealDark = Color(0xFF1B5E20),
-    coral = Color(0xFFB02A37),
-    coralLight = Color(0xFFFDECEA),
-    coralDark = Color(0xFF7A1F2B),
+    purple = Color(0xFF0891B2),
+    purpleLight = Color(0xFFE0F7FA),
+    purpleDark = Color(0xFF075E6B),
+    teal = Color(0xFF059669),
+    tealLight = Color(0xFFE7F8F0),
+    tealDark = Color(0xFF04543B),
+    coral = Color(0xFFE11D48),
+    coralLight = Color(0xFFFCE8EC),
+    coralDark = Color(0xFF9F1239),
     amber = Color(0xFFB45309),
     amberLight = Color(0xFFFFFBEB),
     amberDark = Color(0xFF78350F),
-    surface0 = Color(0xFFFAFAFA),
-    surface1 = Color(0xFFF5F5F5),
+    surface0 = Color(0xFFF4F6FC),
+    surface1 = Color(0xFFECEFF9),
     surface2 = Color(0xFFFFFFFF),
-    textPrimary = Color(0xFF212121),
-    textSecondary = Color(0xFF666666),
-    textMuted = Color(0xFF9E9E9E),
-    borderDefault = Color(0xFFECECEC),
+    textPrimary = Color(0xFF1A1F36),
+    textSecondary = Color(0xFF565C7D),
+    textMuted = Color(0xFF8B90AC),
+    borderDefault = Color(0xFFE2E5F3),
 )
 
 private val DarkPalette = RunwayPalette(
-    purple = Color(0xFF36CFCC),
-    purpleLight = Color(0xFF123B3A),
-    purpleDark = Color(0xFF7FEAE7),
-    teal = Color(0xFF66BB6A),
-    tealLight = Color(0xFF1B3320),
-    tealDark = Color(0xFFA5D6A7),
-    coral = Color(0xFFDC3545),
-    coralLight = Color(0xFF3D1418),
-    coralDark = Color(0xFFF1948A),
+    purple = Color(0xFF22D3EE),
+    purpleLight = Color(0xFF123244),
+    purpleDark = Color(0xFF67E8F9),
+    teal = Color(0xFF34D399),
+    tealLight = Color(0xFF0F3327),
+    tealDark = Color(0xFF6EE7B7),
+    coral = Color(0xFFFB7185),
+    coralLight = Color(0xFF3F1620),
+    coralDark = Color(0xFFFCA5AF),
     amber = Color(0xFFFBBF24),
     amberLight = Color(0xFF3F2A06),
     amberDark = Color(0xFFFDE68A),
-    surface0 = Color(0xFF191919),
-    surface1 = Color(0xFF212121),
-    surface2 = Color(0xFF424242),
-    textPrimary = Color(0xFFF2F2F2),
-    textSecondary = Color(0xFFBCBCBC),
-    textMuted = Color(0xFF909090),
-    borderDefault = Color(0xFF515151),
+    surface0 = Color(0xFF12172E),
+    surface1 = Color(0xFF171C38),
+    surface2 = Color(0xFF1D2447),
+    textPrimary = Color(0xFFF5F7FF),
+    textSecondary = Color(0xFF9CA3C4),
+    textMuted = Color(0xFF6B7299),
+    borderDefault = Color(0xFF2B3260),
 )
 
 val LocalRunwayPalette = staticCompositionLocalOf { LightPalette }
 
+/** App-wide rounded, friendly sans-serif (bundled from resources/font, variable-weight file). */
+val AppFontFamily: FontFamily = FontFamily(
+    Font("font/Quicksand.ttf", FontWeight.Normal),
+    Font("font/Quicksand.ttf", FontWeight.Medium),
+    Font("font/Quicksand.ttf", FontWeight.SemiBold),
+    Font("font/Quicksand.ttf", FontWeight.Bold),
+)
+
 /** Numeric/metric font used for currency figures throughout the app. */
-val NumericFontFamily: FontFamily = FontFamily.SansSerif
+val NumericFontFamily: FontFamily = AppFontFamily
 
 val Purple: Color
     @Composable get() = LocalRunwayPalette.current.purple
@@ -172,26 +181,29 @@ fun RunwayIQTheme(darkTheme: Boolean = false, content: @Composable () -> Unit) {
             colorScheme = colorScheme,
             typography = Typography(
                 headlineLarge = TextStyle(
+                    fontFamily = AppFontFamily,
                     fontSize = 24.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = palette.textPrimary,
                     letterSpacing = (-0.3).sp,
                 ),
                 headlineMedium = TextStyle(
+                    fontFamily = AppFontFamily,
                     fontSize = 20.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = palette.textPrimary,
                     letterSpacing = (-0.2).sp,
                 ),
                 headlineSmall = TextStyle(
+                    fontFamily = AppFontFamily,
                     fontSize = 17.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = palette.textPrimary,
                 ),
-                bodyLarge = TextStyle(fontSize = 15.sp, color = palette.textPrimary, lineHeight = 22.sp),
-                bodyMedium = TextStyle(fontSize = 13.sp, color = palette.textSecondary, lineHeight = 20.sp),
-                bodySmall = TextStyle(fontSize = 12.sp, color = palette.textMuted),
-                labelMedium = TextStyle(fontSize = 12.sp, fontWeight = FontWeight.Medium, color = palette.textSecondary),
+                bodyLarge = TextStyle(fontFamily = AppFontFamily, fontSize = 15.sp, color = palette.textPrimary, lineHeight = 22.sp),
+                bodyMedium = TextStyle(fontFamily = AppFontFamily, fontSize = 13.sp, color = palette.textSecondary, lineHeight = 20.sp),
+                bodySmall = TextStyle(fontFamily = AppFontFamily, fontSize = 12.sp, color = palette.textMuted),
+                labelMedium = TextStyle(fontFamily = AppFontFamily, fontSize = 12.sp, fontWeight = FontWeight.Medium, color = palette.textSecondary),
             ),
             content = content,
         )

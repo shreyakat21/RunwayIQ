@@ -1,6 +1,7 @@
 package com.runwayiq.ui
 
 import com.runwayiq.ai.GroqClient
+import com.runwayiq.ai.StockPriceClient
 import com.runwayiq.data.SecureKeyStore
 import com.runwayiq.data.model.*
 import com.runwayiq.data.repository.FinancialRepository
@@ -10,7 +11,7 @@ import com.runwayiq.domain.usecase.FinancialSummaryUseCase
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 
-enum class NavScreen { DASHBOARD, REVENUE, EXPENSES, BUDGET, WHATIF, SCENARIOS, SETTINGS }
+enum class NavScreen { DASHBOARD, REVENUE, EXPENSES, BUDGET, WHATIF, PORTFOLIO, SCENARIOS, SETTINGS }
 
 data class AppState(
     val screen: NavScreen = NavScreen.DASHBOARD,
@@ -20,6 +21,10 @@ data class AppState(
     val revenues: List<RevenueEntry> = emptyList(),
     val expenses: List<ExpenseEntry> = emptyList(),
     val budgetLines: List<BudgetLine> = emptyList(),
+    val holdings: List<Holding> = emptyList(),
+    val holdingQuotes: Map<String, StockQuote> = emptyMap(),
+    val isLoadingQuotes: Boolean = false,
+    val stockApiKey: String = "",
     val chatMessages: List<ChatMessage> = emptyList(),
     val alerts: List<Alert> = emptyList(),
     val streamingResponse: String = "",
@@ -51,6 +56,7 @@ class AppViewModel(
     val state: StateFlow<AppState> = _state.asStateFlow()
 
     private var groqClient: GroqClient? = null
+    private var stockPriceClient: StockPriceClient? = null
 
     private val monitoringService = MonitoringService(
         repo = repo,
@@ -87,6 +93,24 @@ class AppViewModel(
         groqClient = null
         _state.update { it.copy(apiKey = "") }
         prefs().remove("api_key")
+    }
+
+    fun setStockApiKey(key: String) {
+        val trimmed = key.trim()
+        stockPriceClient = if (trimmed.isNotBlank()) StockPriceClient(trimmed) else null
+        _state.update { it.copy(stockApiKey = trimmed) }
+        prefs().put("stock_api_key", SecureKeyStore.encrypt(trimmed))
+    }
+
+    fun loadStockApiKey() {
+        val key = SecureKeyStore.decrypt(prefs().get("stock_api_key", ""))
+        if (key.isNotBlank()) setStockApiKey(key)
+    }
+
+    fun clearStockApiKey() {
+        stockPriceClient = null
+        _state.update { it.copy(stockApiKey = "", holdingQuotes = emptyMap()) }
+        prefs().remove("stock_api_key")
     }
 
     private fun prefs() = java.util.prefs.Preferences.userRoot().node("runwayiq")
@@ -178,6 +202,7 @@ class AppViewModel(
                     revenues = emptyList(),
                     expenses = emptyList(),
                     budgetLines = emptyList(),
+                    holdings = emptyList(),
                     chatMessages = emptyList(),
                     alerts = emptyList(),
                 )
@@ -194,6 +219,7 @@ class AppViewModel(
         val messages = resolvedActive?.let { repo.getMessages(it.id) } ?: emptyList()
         val alerts = repo.getActiveAlerts()
         val budgetLines = budgetUseCase.computeBudgetLines()
+        val holdings = repo.getAllHoldings()
 
         _state.update {
             it.copy(
@@ -203,6 +229,7 @@ class AppViewModel(
                 revenues = revenues,
                 expenses = expenses,
                 budgetLines = budgetLines,
+                holdings = holdings,
                 chatMessages = messages,
                 alerts = alerts,
                 isLoading = false,
@@ -258,6 +285,47 @@ class AppViewModel(
         }
     }
 
+    fun loadSampleData() {
+        launchSafely {
+            if (repo.getAllScenarios().isEmpty()) {
+                repo.insertScenario("Base Case", 50_000_00L)
+                repo.setActiveScenario(repo.getAllScenarios().first().id)
+            }
+
+            val months = lastNMonths(6)
+            val mrr = listOf(8_000_00L, 9_200_00L, 10_500_00L, 11_800_00L, 13_200_00L, 14_000_00L)
+            val salaries = listOf(18_000_00L, 18_000_00L, 19_500_00L, 19_500_00L, 21_000_00L, 21_000_00L)
+
+            months.forEachIndexed { i, month -> repo.insertRevenue(month, mrr[i], "MRR", "mrr") }
+            repo.insertRevenue(months[2], 5_000_00L, "Annual plan upsell", "one_time")
+            repo.insertRevenue(months[4], 15_000_00L, "Research grant", "grant")
+
+            months.forEachIndexed { i, month -> repo.insertExpense(month, salaries[i], "Payroll", "salaries") }
+            months.forEach { month -> repo.insertExpense(month, 1_200_00L, "AWS", "cloud") }
+            months.takeLast(3).forEach { month -> repo.insertExpense(month, 2_500_00L, "Paid ads", "marketing") }
+            repo.insertExpense(months[1], 800_00L, "Office supplies", "office")
+            repo.insertExpense(months.last(), 600_00L, "SaaS tools", "software")
+
+            repo.setBudget("mrr", "revenue", 15_000_00L)
+            repo.setBudget("salaries", "expense", 22_000_00L)
+            repo.setBudget("cloud", "expense", 1_500_00L)
+            repo.setBudget("marketing", "expense", 3_000_00L)
+
+            repo.insertHolding("AAPL", 25.0, 4_200_00L, "2025-11-15")
+            repo.insertHolding("VOO", 10.0, 4_800_00L, "2025-12-01")
+
+            loadAll()
+        }
+    }
+
+    private fun lastNMonths(n: Int): List<String> {
+        val now = java.time.YearMonth.now()
+        return (n - 1 downTo 0).map { offset ->
+            val ym = now.minusMonths(offset.toLong())
+            "%04d-%02d".format(ym.year, ym.monthValue)
+        }
+    }
+
     fun setBudget(category: String, entryType: String, monthlyTargetDollars: Double) {
         launchSafely {
             repo.setBudget(category, entryType, (monthlyTargetDollars * 100).toLong())
@@ -267,6 +335,39 @@ class AppViewModel(
 
     fun deleteBudget(id: Long) {
         launchSafely { repo.deleteBudget(id); loadAll() }
+    }
+
+    fun addHolding(ticker: String, shares: Double, costBasisDollars: Double, purchaseDate: String) {
+        launchSafely {
+            repo.insertHolding(ticker, shares, (costBasisDollars * 100).toLong(), purchaseDate)
+            loadAll()
+        }
+    }
+
+    fun deleteHolding(id: Long) {
+        launchSafely { repo.deleteHolding(id); loadAll() }
+    }
+
+    fun refreshQuotes() {
+        val client = stockPriceClient
+        if (client == null) {
+            _state.update { it.copy(errorMessage = "Add your stock API key in Settings first.") }
+            return
+        }
+        val tickers = _state.value.holdings.map { it.ticker }
+        if (tickers.isEmpty()) return
+
+        scope.launch {
+            _state.update { it.copy(isLoadingQuotes = true) }
+            try {
+                val quotes = client.getQuotes(tickers)
+                _state.update {
+                    it.copy(isLoadingQuotes = false, holdingQuotes = quotes.associateBy { q -> q.ticker })
+                }
+            } catch (e: Exception) {
+                _state.update { it.copy(isLoadingQuotes = false, errorMessage = "Price fetch failed: ${e.message}") }
+            }
+        }
     }
 
     fun addScenario(name: String, cashBalance: Double) {
@@ -453,6 +554,7 @@ class AppViewModel(
 
     fun onDestroy() {
         groqClient?.close()
+        stockPriceClient?.close()
         scope.cancel()
     }
 }

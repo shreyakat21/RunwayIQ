@@ -32,6 +32,7 @@ fun main() = application {
 
     LaunchedEffect(Unit) {
         viewModel.loadApiKey()
+        viewModel.loadStockApiKey()
         viewModel.loadThemePreference()
         focusRequester.requestFocus()
     }
@@ -65,8 +66,9 @@ fun main() = application {
                             Key.Three -> { viewModel.navigate(NavScreen.EXPENSES); true }
                             Key.Four -> { viewModel.navigate(NavScreen.BUDGET); true }
                             Key.Five -> { viewModel.navigate(NavScreen.WHATIF); true }
-                            Key.Six -> { viewModel.navigate(NavScreen.SCENARIOS); true }
-                            Key.Seven -> { viewModel.navigate(NavScreen.SETTINGS); true }
+                            Key.Six -> { viewModel.navigate(NavScreen.PORTFOLIO); true }
+                            Key.Seven -> { viewModel.navigate(NavScreen.SCENARIOS); true }
+                            Key.Eight -> { viewModel.navigate(NavScreen.SETTINGS); true }
                             Key.N -> { viewModel.triggerAddEntry(); true }
                             Key.Enter -> { viewModel.triggerChatSend(); true }
                             else -> false
@@ -119,6 +121,12 @@ fun main() = application {
                                     onDeleteBudget = viewModel::deleteBudget,
                                 )
                                 NavScreen.WHATIF -> WhatIfScreen(state = state)
+                                NavScreen.PORTFOLIO -> PortfolioScreen(
+                                    state = state,
+                                    onAdd = viewModel::addHolding,
+                                    onDelete = viewModel::deleteHolding,
+                                    onRefreshPrices = viewModel::refreshQuotes,
+                                )
                                 NavScreen.SCENARIOS -> ScenariosScreen(
                                     state = state,
                                     onAdd = viewModel::addScenario,
@@ -130,6 +138,9 @@ fun main() = application {
                                     state = state,
                                     onSaveApiKey = viewModel::setApiKey,
                                     onClearApiKey = viewModel::clearApiKey,
+                                    onSaveStockApiKey = viewModel::setStockApiKey,
+                                    onClearStockApiKey = viewModel::clearStockApiKey,
+                                    onLoadSampleData = viewModel::loadSampleData,
                                 )
                             }
                         }

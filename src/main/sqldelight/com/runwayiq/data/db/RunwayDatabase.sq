@@ -51,6 +51,15 @@ CREATE TABLE IF NOT EXISTS budget (
     UNIQUE(category, entry_type)
 );
 
+CREATE TABLE IF NOT EXISTS holding (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    ticker TEXT NOT NULL,
+    shares REAL NOT NULL,
+    cost_basis_cents INTEGER NOT NULL,
+    purchase_date TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 -- Revenue queries
 getAllRevenue:
 SELECT * FROM revenue_entry ORDER BY month DESC;
@@ -126,3 +135,13 @@ ON CONFLICT(category, entry_type) DO UPDATE SET monthly_target_cents = excluded.
 
 deleteBudget:
 DELETE FROM budget WHERE id = ?;
+
+-- Holding queries
+getAllHoldings:
+SELECT * FROM holding ORDER BY created_at DESC;
+
+insertHolding:
+INSERT INTO holding (ticker, shares, cost_basis_cents, purchase_date) VALUES (?, ?, ?, ?);
+
+deleteHolding:
+DELETE FROM holding WHERE id = ?;

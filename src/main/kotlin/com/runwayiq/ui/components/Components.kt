@@ -3,12 +3,14 @@ package com.runwayiq.ui.components
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.LightMode
+import androidx.compose.material.icons.filled.TrendingUp
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
@@ -105,8 +107,8 @@ private fun MetricCardShell(
             Spacer(Modifier.height(4.dp))
             Text(
                 value,
-                fontSize = 23.sp,
-                fontWeight = FontWeight.SemiBold,
+                fontSize = 26.sp,
+                fontWeight = FontWeight.Bold,
                 fontFamily = NumericFontFamily,
                 color = TextPrimary,
             )
@@ -166,8 +168,8 @@ fun SummaryCard(
             Spacer(Modifier.height(4.dp))
             Text(
                 value,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.SemiBold,
+                fontSize = 22.sp,
+                fontWeight = FontWeight.Bold,
                 fontFamily = NumericFontFamily,
                 color = TextPrimary,
             )
@@ -398,38 +400,48 @@ fun SideNav(
     onToggleTheme: () -> Unit,
 ) {
     Surface(
-        modifier = Modifier.width(200.dp).fillMaxHeight(),
+        modifier = Modifier.width(216.dp).fillMaxHeight(),
+        shape = RoundedCornerShape(topEnd = 24.dp, bottomEnd = 24.dp),
         color = Surface1,
         border = BorderStroke(0.5.dp, BorderDefault),
     ) {
-        Column(Modifier.padding(12.dp)) {
-            Row(
-                Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 12.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
+        Column(Modifier.padding(16.dp)) {
+            Column(
+                Modifier.fillMaxWidth().padding(vertical = 16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                Text(
-                    "RunwayIQ",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    letterSpacing = (-0.2).sp,
-                    color = Purple,
-                )
-                IconButton(onClick = onToggleTheme, modifier = Modifier.size(28.dp)) {
-                    Icon(
-                        if (isDarkTheme) Icons.Default.LightMode else Icons.Default.DarkMode,
-                        contentDescription = if (isDarkTheme) "Switch to light mode" else "Switch to dark mode",
-                        tint = TextSecondary,
-                        modifier = Modifier.size(16.dp),
+                Box(
+                    Modifier.size(48.dp).clip(CircleShape).background(Purple),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(Icons.Default.TrendingUp, contentDescription = null, tint = Color.White, modifier = Modifier.size(24.dp))
+                }
+                Spacer(Modifier.height(10.dp))
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text(
+                        "RunwayIQ",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = (-0.2).sp,
+                        color = TextPrimary,
                     )
+                    IconButton(onClick = onToggleTheme, modifier = Modifier.size(24.dp)) {
+                        Icon(
+                            if (isDarkTheme) Icons.Default.LightMode else Icons.Default.DarkMode,
+                            contentDescription = if (isDarkTheme) "Switch to light mode" else "Switch to dark mode",
+                            tint = TextSecondary,
+                            modifier = Modifier.size(14.dp),
+                        )
+                    }
                 }
             }
             Spacer(Modifier.height(8.dp))
-            NavItem(NavScreen.DASHBOARD, "Dashboard", current, onNavigate)
+            NavItem(NavScreen.DASHBOARD, "Overview", current, onNavigate)
             NavItem(NavScreen.REVENUE, "Revenue", current, onNavigate)
             NavItem(NavScreen.EXPENSES, "Expenses", current, onNavigate)
             NavItem(NavScreen.BUDGET, "Budget", current, onNavigate)
             NavItem(NavScreen.WHATIF, "What-If", current, onNavigate)
+            NavItem(NavScreen.PORTFOLIO, "Portfolio", current, onNavigate)
             NavItem(NavScreen.SCENARIOS, "Scenarios", current, onNavigate)
             Spacer(Modifier.weight(1f))
             NavItem(NavScreen.SETTINGS, "Settings", current, onNavigate)
@@ -442,16 +454,16 @@ fun NavItem(screen: NavScreen, label: String, current: NavScreen, onNavigate: (N
     val active = screen == current
     Surface(
         onClick = { onNavigate(screen) },
-        modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
-        shape = RoundedCornerShape(8.dp),
-        color = if (active) PurpleLight else Color.Transparent,
+        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+        shape = RoundedCornerShape(999.dp),
+        color = if (active) Purple else Color.Transparent,
     ) {
         Text(
             label,
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-            color = if (active) PurpleDark else TextSecondary,
-            fontWeight = if (active) FontWeight.Medium else FontWeight.Normal,
-            fontSize = 14.sp,
+            modifier = Modifier.padding(horizontal = 18.dp, vertical = 14.dp),
+            color = if (active) Color.White else TextSecondary,
+            fontWeight = if (active) FontWeight.SemiBold else FontWeight.Medium,
+            fontSize = 15.sp,
         )
     }
 }

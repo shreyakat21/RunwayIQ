@@ -93,3 +93,26 @@ data class BudgetLine(
     val varianceCents: Long get() = actualCents - targetCents
     val isOverBudget: Boolean get() = if (entryType == "expense") actualCents > targetCents else actualCents < targetCents
 }
+
+data class Holding(
+    val id: Long,
+    val ticker: String,
+    val shares: Double,
+    val costBasisCents: Long,
+    val purchaseDate: String,
+)
+
+data class StockQuote(
+    val ticker: String,
+    val priceCents: Long,
+    val changePct: Double,
+)
+
+data class HoldingWithQuote(
+    val holding: Holding,
+    val quote: StockQuote?,
+) {
+    val currentValueCents: Long get() = quote?.let { (holding.shares * it.priceCents).toLong() } ?: holding.costBasisCents
+    val gainLossCents: Long get() = currentValueCents - holding.costBasisCents
+    val gainLossPct: Double get() = if (holding.costBasisCents == 0L) 0.0 else (gainLossCents.toDouble() / holding.costBasisCents) * 100.0
+}

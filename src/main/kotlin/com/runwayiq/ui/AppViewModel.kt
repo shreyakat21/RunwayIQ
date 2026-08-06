@@ -11,7 +11,7 @@ import com.runwayiq.domain.usecase.FinancialSummaryUseCase
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 
-enum class NavScreen { DASHBOARD, REVENUE, EXPENSES, BUDGET, WHATIF, PORTFOLIO, SCENARIOS, SETTINGS }
+enum class NavScreen { DASHBOARD, REVENUE, EXPENSES, BUDGET, WHATIF, PORTFOLIO, FUNDRAISING, SCENARIOS, SETTINGS }
 
 data class AppState(
     val screen: NavScreen = NavScreen.DASHBOARD,
@@ -25,6 +25,7 @@ data class AppState(
     val holdingQuotes: Map<String, StockQuote> = emptyMap(),
     val isLoadingQuotes: Boolean = false,
     val stockApiKey: String = "",
+    val investors: List<Investor> = emptyList(),
     val chatMessages: List<ChatMessage> = emptyList(),
     val alerts: List<Alert> = emptyList(),
     val streamingResponse: String = "",
@@ -203,6 +204,7 @@ class AppViewModel(
                     expenses = emptyList(),
                     budgetLines = emptyList(),
                     holdings = emptyList(),
+                    investors = emptyList(),
                     chatMessages = emptyList(),
                     alerts = emptyList(),
                 )
@@ -220,6 +222,7 @@ class AppViewModel(
         val alerts = repo.getActiveAlerts()
         val budgetLines = budgetUseCase.computeBudgetLines()
         val holdings = repo.getAllHoldings()
+        val investors = repo.getAllInvestors()
 
         _state.update {
             it.copy(
@@ -230,6 +233,7 @@ class AppViewModel(
                 expenses = expenses,
                 budgetLines = budgetLines,
                 holdings = holdings,
+                investors = investors,
                 chatMessages = messages,
                 alerts = alerts,
                 isLoading = false,
@@ -314,6 +318,11 @@ class AppViewModel(
             repo.insertHolding("AAPL", 25.0, 4_200_00L, "2025-11-15")
             repo.insertHolding("VOO", 10.0, 4_800_00L, "2025-12-01")
 
+            repo.insertInvestor("Jordan Lee", "Northbeam Ventures", InvestorStage.TERM_SHEET, 500_000_00L, "Lead on term sheet, closing in 2 weeks", months.last())
+            repo.insertInvestor("Priya Nair", "Anchor Seed Fund", InvestorStage.DUE_DILIGENCE, 250_000_00L, "Reviewing data room", months.last())
+            repo.insertInvestor("Sam Okafor", "", InvestorStage.PITCHED, 100_000_00L, "Angel, follow up next week", months[months.size - 2])
+            repo.insertInvestor("Dana Kim", "Redline Capital", InvestorStage.PASSED, 0L, "Passed - too early for their thesis", months[2])
+
             loadAll()
         }
     }
@@ -368,6 +377,28 @@ class AppViewModel(
                 _state.update { it.copy(isLoadingQuotes = false, errorMessage = "Price fetch failed: ${e.message}") }
             }
         }
+    }
+
+    fun addInvestor(
+        name: String,
+        firm: String,
+        stage: InvestorStage,
+        amountDollars: Double,
+        notes: String,
+        lastContactDate: String,
+    ) {
+        launchSafely {
+            repo.insertInvestor(name, firm, stage, (amountDollars * 100).toLong(), notes, lastContactDate)
+            loadAll()
+        }
+    }
+
+    fun updateInvestorStage(id: Long, stage: InvestorStage) {
+        launchSafely { repo.updateInvestorStage(id, stage); loadAll() }
+    }
+
+    fun deleteInvestor(id: Long) {
+        launchSafely { repo.deleteInvestor(id); loadAll() }
     }
 
     fun addScenario(name: String, cashBalance: Double) {

@@ -442,6 +442,7 @@ fun SideNav(
             NavItem(NavScreen.BUDGET, "Budget", current, onNavigate)
             NavItem(NavScreen.WHATIF, "What-If", current, onNavigate)
             NavItem(NavScreen.PORTFOLIO, "Portfolio", current, onNavigate)
+            NavItem(NavScreen.FUNDRAISING, "Fundraising", current, onNavigate)
             NavItem(NavScreen.SCENARIOS, "Scenarios", current, onNavigate)
             Spacer(Modifier.weight(1f))
             NavItem(NavScreen.SETTINGS, "Settings", current, onNavigate)

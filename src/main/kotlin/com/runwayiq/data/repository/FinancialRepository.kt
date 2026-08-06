@@ -155,4 +155,29 @@ class FinancialRepository(private val db: RunwayDatabase) {
     suspend fun deleteHolding(id: Long) = withContext(Dispatchers.IO) {
         db.runwayDatabaseQueries.deleteHolding(id)
     }
+
+    suspend fun getAllInvestors(): List<Investor> = withContext(Dispatchers.IO) {
+        db.runwayDatabaseQueries.getAllInvestors().executeAsList().map {
+            Investor(it.id, it.name, it.firm, InvestorStage.valueOf(it.stage), it.amount_cents, it.notes, it.last_contact_date)
+        }
+    }
+
+    suspend fun insertInvestor(
+        name: String,
+        firm: String,
+        stage: InvestorStage,
+        amountCents: Long,
+        notes: String,
+        lastContactDate: String,
+    ) = withContext(Dispatchers.IO) {
+        db.runwayDatabaseQueries.insertInvestor(name, firm, stage.name, amountCents, notes, lastContactDate)
+    }
+
+    suspend fun updateInvestorStage(id: Long, stage: InvestorStage) = withContext(Dispatchers.IO) {
+        db.runwayDatabaseQueries.updateInvestorStage(stage.name, id)
+    }
+
+    suspend fun deleteInvestor(id: Long) = withContext(Dispatchers.IO) {
+        db.runwayDatabaseQueries.deleteInvestor(id)
+    }
 }

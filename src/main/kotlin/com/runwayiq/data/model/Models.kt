@@ -116,3 +116,23 @@ data class HoldingWithQuote(
     val gainLossCents: Long get() = currentValueCents - holding.costBasisCents
     val gainLossPct: Double get() = if (holding.costBasisCents == 0L) 0.0 else (gainLossCents.toDouble() / holding.costBasisCents) * 100.0
 }
+
+enum class InvestorStage(val displayName: String) {
+    CONTACTED("Contacted"),
+    MEETING("Meeting scheduled"),
+    PITCHED("Pitched"),
+    DUE_DILIGENCE("Due diligence"),
+    TERM_SHEET("Term sheet"),
+    COMMITTED("Committed"),
+    PASSED("Passed"),
+}
+
+data class Investor(
+    val id: Long,
+    val name: String,
+    val firm: String,
+    val stage: InvestorStage,
+    val amountCents: Long,
+    val notes: String,
+    val lastContactDate: String,
+)

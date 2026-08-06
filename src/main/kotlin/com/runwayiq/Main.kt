@@ -67,8 +67,9 @@ fun main() = application {
                             Key.Four -> { viewModel.navigate(NavScreen.BUDGET); true }
                             Key.Five -> { viewModel.navigate(NavScreen.WHATIF); true }
                             Key.Six -> { viewModel.navigate(NavScreen.PORTFOLIO); true }
-                            Key.Seven -> { viewModel.navigate(NavScreen.SCENARIOS); true }
-                            Key.Eight -> { viewModel.navigate(NavScreen.SETTINGS); true }
+                            Key.Seven -> { viewModel.navigate(NavScreen.FUNDRAISING); true }
+                            Key.Eight -> { viewModel.navigate(NavScreen.SCENARIOS); true }
+                            Key.Nine -> { viewModel.navigate(NavScreen.SETTINGS); true }
                             Key.N -> { viewModel.triggerAddEntry(); true }
                             Key.Enter -> { viewModel.triggerChatSend(); true }
                             else -> false
@@ -126,6 +127,12 @@ fun main() = application {
                                     onAdd = viewModel::addHolding,
                                     onDelete = viewModel::deleteHolding,
                                     onRefreshPrices = viewModel::refreshQuotes,
+                                )
+                                NavScreen.FUNDRAISING -> FundraisingScreen(
+                                    state = state,
+                                    onAdd = viewModel::addInvestor,
+                                    onUpdateStage = viewModel::updateInvestorStage,
+                                    onDelete = viewModel::deleteInvestor,
                                 )
                                 NavScreen.SCENARIOS -> ScenariosScreen(
                                     state = state,
